@@ -1,21 +1,57 @@
 #include <windows.h>
 #include <resource.h>
 
-const char g_szClassName[] = "myWindowClass";
+const wchar_t g_szClassName[] = L"myWindowClass";
+
+#define ID_FILE_EXIT 9001
+#define ID_STUFF_GO 9002
 
 // Step 3: the Window Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg)
     {
-        case WM_LBUTTONDOWN:
+         case WM_CREATE:
         {
-            char szFileName[MAX_PATH];
-            HINSTANCE hInstance = GetModuleHandle(NULL);
+            HMENU hMenu, hSubMenu;
+            HANDLE hIcon, hIconSm;
 
-            GetModuleFileName(hInstance, szFileName, MAX_PATH);
-            MessageBox(hwnd, szFileName, "This program is:", MB_OK | MB_ICONINFORMATION);
+            hMenu = CreateMenu();
+
+            hSubMenu = CreatePopupMenu();
+            AppendMenu(hSubMenu, MF_STRING, ID_FILE_EXIT, L"E&xit");
+            AppendMenu(hMenu, MF_STRING | MF_POPUP, (UINT)hSubMenu, L"&File");
+
+            hSubMenu = CreatePopupMenu();
+            AppendMenu(hSubMenu, MF_STRING, ID_STUFF_GO, L"&Go");
+            AppendMenu(hMenu, MF_STRING | MF_POPUP, (UINT)hSubMenu, L"&Stuff");
+
+            SetMenu(hwnd, hMenu);
+
+
+            hIcon = LoadImage(NULL, L"test.ico", IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+            if(hIcon)
+                SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+            else
+                MessageBox(hwnd, L"Could not load large icon!", L"Error", MB_OK | MB_ICONERROR);
+
+            hIconSm = LoadImage(NULL, L"small.ico", IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
+            if(hIconSm)
+                SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIconSm);
+            else
+                MessageBox(hwnd, L"Could not load small icon!", L"Error", MB_OK | MB_ICONERROR);
         }
+        break;
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case ID_FILE_EXIT:
+
+                break;
+                case ID_STUFF_GO:
+
+                break;
+            }
         break;
         case WM_CLOSE:
             DestroyWindow(hwnd);
