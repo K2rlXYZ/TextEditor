@@ -1,7 +1,5 @@
 #include <windows.h>
 
-WNDCLASSEX CreateDefaultWNDCLASSEX(HINSTANCE hInstance);
+LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-HWND WINAPI CreateDefaultWindowEx(HINSTANCE hInstance);
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nFunsterStil);

@@ -1,94 +1,124 @@
-#include <windows.h>
-#include <resource.h>
+#include <Windows.h>
 
-const wchar_t g_szClassName[] = L"myWindowClass";
+#define WINDOW_WIDTH 544
+#define WINDOW_HEIGHT 375
 
-#define ID_FILE_EXIT 9001
-#define ID_STUFF_GO 9002
+RECT TITLE_BAR = {0, 0, WINDOW_WIDTH, 20};
+RECT WINDOW = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
+BOOL dragWindow = false;
 
-// Step 3: the Window Procedure
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+// GUI logic
+LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch(msg)
+    switch (message)
     {
-         case WM_CREATE:
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    case WM_PAINT:
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hwnd, &ps);
+
+        HBRUSH hBrush = CreateSolidBrush(RGB(32, 32, 32));
+        HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
+
+        Rectangle(hdc, TITLE_BAR.left, TITLE_BAR.top, TITLE_BAR.right, TITLE_BAR.bottom);
+
+        SelectObject(hdc, hOldBrush);
+        DeleteObject(hBrush);
+
+        EndPaint(hwnd, &ps);
+    }
+        return 0;
+    case WM_LBUTTONDOWN:
+        POINT pt_screen;
+        GetCursorPos(&pt_screen);
+
+        POINT pt_client;
+        pt_client.x = pt_screen.x;
+        pt_client.y = pt_screen.y;
+        ScreenToClient(hwnd, &pt_client);
+
+        if (PtInRect(&TITLE_BAR, pt_client))
         {
-            HMENU hMenu, hSubMenu;
-            HANDLE hIcon, hIconSm;
-
-            hMenu = CreateMenu();
-
-            hSubMenu = CreatePopupMenu();
-            AppendMenu(hSubMenu, MF_STRING, ID_FILE_EXIT, L"E&xit");
-            AppendMenu(hMenu, MF_STRING | MF_POPUP, (UINT)hSubMenu, L"&File");
-
-            hSubMenu = CreatePopupMenu();
-            AppendMenu(hSubMenu, MF_STRING, ID_STUFF_GO, L"&Go");
-            AppendMenu(hMenu, MF_STRING | MF_POPUP, (UINT)hSubMenu, L"&Stuff");
-
-            SetMenu(hwnd, hMenu);
-
-
-            hIcon = LoadImage(NULL, L"test.ico", IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
-            if(hIcon)
-                SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-            else
-                MessageBox(hwnd, L"Could not load large icon!", L"Error", MB_OK | MB_ICONERROR);
-
-            hIconSm = LoadImage(NULL, L"small.ico", IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
-            if(hIconSm)
-                SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIconSm);
-            else
-                MessageBox(hwnd, L"Could not load small icon!", L"Error", MB_OK | MB_ICONERROR);
+            SetCapture(hwnd);  // Capture the mouse
+            dragWindow = true; // Set a flag to indicate dragging
         }
         break;
-        case WM_COMMAND:
-            switch(LOWORD(wParam))
-            {
-                case ID_FILE_EXIT:
+        break;
+    case WM_MOUSEMOVE:
+        if (dragWindow)
+        {
+            POINT pt_screen;
+            GetCursorPos(&pt_screen);
 
-                break;
-                case ID_STUFF_GO:
+            POINT pt_client;
+            pt_client.x = pt_screen.x;
+            pt_client.y = pt_screen.y;
+            ScreenToClient(hwnd, &pt_client);
 
-                break;
-            }
+            RECT mainWindowRect;
+            GetWindowRect(hwnd, &mainWindowRect);
+            int windowWidth = mainWindowRect.right - mainWindowRect.left;
+            int windowHeight = mainWindowRect.bottom - mainWindowRect.top;
+
+            MoveWindow(hwnd, pt_screen.x - pt_client.x, pt_screen.y - pt_client.y, windowWidth, windowHeight, TRUE);
+        }
         break;
-        case WM_CLOSE:
-            DestroyWindow(hwnd);
+    case WM_LBUTTONUP:
+        ReleaseCapture();     // Release the mouse capture
+        dragWindow = false; // Reset the dragging flag
         break;
-        case WM_DESTROY:
-            PostQuitMessage(0);
-        break;
-        default:
-            return DefWindowProc(hwnd, msg, wParam, lParam);
+    default:
+        return DefWindowProc(hwnd, message, wParam, lParam);
     }
     return 0;
 }
 
-WNDCLASSEX CreateDefaultWNDCLASSEX(HINSTANCE hInstance){
-    WNDCLASSEX wc;
+int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nFunsterStil)
+{
+    const wchar_t szClassName[] = L"WindowsApp";
+    WNDCLASSEX wincl;
 
-    wc.cbSize        = sizeof(WNDCLASSEX);
-    wc.style         = 0;
-    wc.lpfnWndProc   = WndProc;
-    wc.cbClsExtra    = 0;
-    wc.cbWndExtra    = 0;
-    wc.hInstance     = hInstance;
-    wc.hIcon         = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MYICON));
-    wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-    wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MYMENU);
-    wc.lpszClassName = g_szClassName;
-    wc.hIconSm       = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MYICON), IMAGE_ICON, 16, 16, 0);
-    return wc;
-}
+    wincl.hInstance = hThisInstance;
+    wincl.lpszClassName = szClassName;
+    wincl.lpfnWndProc = WindowProcedure;
+    wincl.style = CS_DBLCLKS;
+    wincl.cbSize = sizeof(WNDCLASSEX);
+    wincl.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wincl.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+    wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wincl.lpszMenuName = NULL;
+    wincl.cbClsExtra = 0;
+    wincl.cbWndExtra = 0;
+    wincl.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
 
-HWND WINAPI CreateDefaultWindowEx(HINSTANCE hInstance){
-    return CreateWindowEx(
-        WS_EX_CLIENTEDGE,
-        g_szClassName,
-        TEXT("TE"),
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
-        NULL, NULL, hInstance, NULL);
+    if (!RegisterClassEx(&wincl))
+        return 0;
+
+    HWND hwnd = CreateWindowEx(
+        0,
+        szClassName,
+        L"",
+        WS_POPUP, // WS_POPUP for borderless 0 for top border with nothing on it
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        HWND_DESKTOP,
+        NULL,
+        hThisInstance,
+        NULL);
+
+    ShowWindow(hwnd, nFunsterStil);
+
+    MSG messages;
+    while (GetMessage(&messages, NULL, 0, 0))
+    {
+        TranslateMessage(&messages);
+        DispatchMessage(&messages);
+    }
+
+    return messages.wParam;
 }

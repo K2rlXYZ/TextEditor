@@ -1,2 +1,0 @@
-#define IDR_MYMENU 101
-#define IDI_MYICON 201
