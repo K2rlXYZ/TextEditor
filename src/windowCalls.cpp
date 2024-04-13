@@ -1,7 +1,10 @@
 #include <Windows.h>
+#include <Windowsx.h>
 
 #define WINDOW_WIDTH 544
 #define WINDOW_HEIGHT 375
+#define PRIMARY_COLOR RGB(48, 48, 48)
+#define SECONDARY_COLOR RGB(32, 32, 32)
 
 RECT TITLE_BAR = {0, 0, WINDOW_WIDTH, 20};
 RECT WINDOW = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
@@ -20,56 +23,37 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
 
-        HBRUSH hBrush = CreateSolidBrush(RGB(32, 32, 32));
+        HBRUSH hBrush = CreateSolidBrush(PRIMARY_COLOR);
         HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc, hBrush);
 
-        Rectangle(hdc, TITLE_BAR.left, TITLE_BAR.top, TITLE_BAR.right, TITLE_BAR.bottom);
+        // Background
+        FillRect(hdc, &WINDOW, hBrush);
+        // TitleBar
+        hBrush = CreateSolidBrush(SECONDARY_COLOR);
+        FillRect(hdc, &TITLE_BAR, hBrush);
 
         SelectObject(hdc, hOldBrush);
         DeleteObject(hBrush);
 
         EndPaint(hwnd, &ps);
+        break;
     }
-        return 0;
-    case WM_LBUTTONDOWN:
-        POINT pt_screen;
-        GetCursorPos(&pt_screen);
+    case WM_NCHITTEST:
+    {
+        LPARAM lp = lParam;
+        POINT pt = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+        ScreenToClient(hwnd, &pt);
 
-        POINT pt_client;
-        pt_client.x = pt_screen.x;
-        pt_client.y = pt_screen.y;
-        ScreenToClient(hwnd, &pt_client);
-
-        if (PtInRect(&TITLE_BAR, pt_client))
+        if (PtInRect(&TITLE_BAR, pt))
         {
-            SetCapture(hwnd);  // Capture the mouse
-            dragWindow = true; // Set a flag to indicate dragging
+            return HTCAPTION;
         }
         break;
-        break;
-    case WM_MOUSEMOVE:
-        if (dragWindow)
-        {
-            POINT pt_screen;
-            GetCursorPos(&pt_screen);
-
-            POINT pt_client;
-            pt_client.x = pt_screen.x;
-            pt_client.y = pt_screen.y;
-            ScreenToClient(hwnd, &pt_client);
-
-            RECT mainWindowRect;
-            GetWindowRect(hwnd, &mainWindowRect);
-            int windowWidth = mainWindowRect.right - mainWindowRect.left;
-            int windowHeight = mainWindowRect.bottom - mainWindowRect.top;
-
-            MoveWindow(hwnd, pt_screen.x - pt_client.x, pt_screen.y - pt_client.y, windowWidth, windowHeight, TRUE);
-        }
-        break;
-    case WM_LBUTTONUP:
-        ReleaseCapture();     // Release the mouse capture
-        dragWindow = false; // Reset the dragging flag
-        break;
+    }
+    case WM_SIZE:
+    {
+        
+    }
     default:
         return DefWindowProc(hwnd, message, wParam, lParam);
     }

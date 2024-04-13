@@ -1,2 +1,2 @@
-#include <windows.h>
+#include <Windows.h>
 #include <WindowCalls.h>
