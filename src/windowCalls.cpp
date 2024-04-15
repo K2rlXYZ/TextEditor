@@ -1,3 +1,4 @@
+#include <tuple>
 #include <Windows.h>
 #include <Windowsx.h>
 
@@ -6,9 +7,17 @@
 #define PRIMARY_COLOR RGB(48, 48, 48)
 #define SECONDARY_COLOR RGB(32, 32, 32)
 
-RECT TITLE_BAR = {0, 0, WINDOW_WIDTH, 20};
 RECT WINDOW = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
+RECT TITLE_BAR = {0, 0, WINDOW_WIDTH, 20};
+RECT LEFT_RESIZE = {0,TITLE_BAR.bottom,3,WINDOW.bottom};
+RECT RIGHT_RESIZE = {WINDOW.right-3,TITLE_BAR.bottom,WINDOW.right,WINDOW.bottom};
 BOOL dragWindow = false;
+
+std::tuple<RECT, LRESULT> rects[] = {
+    {TITLE_BAR, HTCAPTION},
+    {left, HTLEFT},
+    {right, HTRIGHT},
+    {bottom, HTBOTTOM}};
 
 // GUI logic
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -40,8 +49,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     }
     case WM_NCHITTEST:
     {
-        LPARAM lp = lParam;
-        POINT pt = {GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+        POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
         ScreenToClient(hwnd, &pt);
 
         if (PtInRect(&TITLE_BAR, pt))
@@ -52,7 +60,12 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     }
     case WM_SIZE:
     {
-        
+        int nWidth = GET_X_LPARAM(lParam);
+        int nHeight = GET_Y_LPARAM(lParam);
+        WINDOW.right = nWidth;
+        WINDOW.bottom = nHeight;
+        TITLE_BAR.right = nWidth;
+        InvalidateRect(hwnd, &WINDOW, 1);
     }
     default:
         return DefWindowProc(hwnd, message, wParam, lParam);
