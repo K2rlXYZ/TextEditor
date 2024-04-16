@@ -8,16 +8,31 @@
 #define SECONDARY_COLOR RGB(32, 32, 32)
 
 RECT WINDOW = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
-RECT TITLE_BAR = {0, 0, WINDOW_WIDTH, 20};
-RECT LEFT_RESIZE = {0,TITLE_BAR.bottom,3,WINDOW.bottom};
-RECT RIGHT_RESIZE = {WINDOW.right-3,TITLE_BAR.bottom,WINDOW.right,WINDOW.bottom};
-BOOL dragWindow = false;
+RECT TITLE_BAR = {0, 0, WINDOW.right, 20};
+RECT LEFT_RESIZE = {0, TITLE_BAR.bottom, 5, WINDOW.bottom - 5};
+RECT RIGHT_RESIZE = {WINDOW.right - 5, TITLE_BAR.bottom, WINDOW.right, WINDOW.bottom - 5};
+RECT BOTTOM_RESIZE = {5, WINDOW.bottom - 5, WINDOW.right - 5, WINDOW.bottom};
+RECT BOTTOM_RIGHT_RESIZE = {WINDOW.right - 5, WINDOW.bottom - 5, WINDOW.right, WINDOW.bottom};
+RECT BOTTOM_LEFT_RESIZE = {0, WINDOW.bottom - 5, 5, WINDOW.bottom};
 
-std::tuple<RECT, LRESULT> rects[] = {
-    {TITLE_BAR, HTCAPTION},
-    {left, HTLEFT},
-    {right, HTRIGHT},
-    {bottom, HTBOTTOM}};
+void setSizes(int wWidth, int wHeight)
+{
+    WINDOW = {0, 0, wWidth, wHeight};
+    TITLE_BAR = {0, 0, WINDOW.right, 20};
+    LEFT_RESIZE = {0, TITLE_BAR.bottom, 5, WINDOW.bottom - 5};
+    RIGHT_RESIZE = {WINDOW.right - 5, TITLE_BAR.bottom, WINDOW.right, WINDOW.bottom - 5};
+    BOTTOM_RESIZE = {5, WINDOW.bottom - 5, WINDOW.right - 5, WINDOW.bottom};
+    BOTTOM_RIGHT_RESIZE = {WINDOW.right - 5, WINDOW.bottom - 5, WINDOW.right, WINDOW.bottom};
+    BOTTOM_LEFT_RESIZE = {0, WINDOW.bottom - 5, 5, WINDOW.bottom};
+}
+
+std::tuple<RECT *, LRESULT> RECTS[] = {
+    {&TITLE_BAR, HTCAPTION},
+    {&LEFT_RESIZE, HTLEFT},
+    {&RIGHT_RESIZE, HTRIGHT},
+    {&BOTTOM_RESIZE, HTBOTTOM},
+    {&BOTTOM_RIGHT_RESIZE, HTBOTTOMRIGHT},
+    {&BOTTOM_LEFT_RESIZE, HTBOTTOMLEFT}};
 
 // GUI logic
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -51,10 +66,12 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     {
         POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
         ScreenToClient(hwnd, &pt);
-
-        if (PtInRect(&TITLE_BAR, pt))
+        for (auto elem : RECTS)
         {
-            return HTCAPTION;
+            if (PtInRect(std::get<0>(elem), pt))
+            {
+                return std::get<1>(elem);
+            }
         }
         break;
     }
@@ -62,9 +79,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     {
         int nWidth = GET_X_LPARAM(lParam);
         int nHeight = GET_Y_LPARAM(lParam);
-        WINDOW.right = nWidth;
-        WINDOW.bottom = nHeight;
-        TITLE_BAR.right = nWidth;
+        setSizes(nWidth, nHeight);
         InvalidateRect(hwnd, &WINDOW, 1);
     }
     default:
