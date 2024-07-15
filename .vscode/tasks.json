@@ -10,7 +10,7 @@
                 "/nologo", 
                 "/DUNICODE", 
                 "/D_UNICODE",
-                "\"user32.lib\" \"gdi32.lib\"",
+                "\"user32.lib\" \"gdi32.lib\"", "\"UxTheme.lib\"",
                 "-IF:\\TextEditor\\include",
                 "/Fd\"${fileDirname}\\..\\build\"",
                 "/Fe${fileDirname}\\..\\build\\${fileBasenameNoExtension}.exe",

@@ -2,39 +2,31 @@
 #include <Windowsx.h>
 #include <tuple>
 
-#define PRIMARY_COLOR RGB(48, 48, 48)
-#define SECONDARY_COLOR RGB(32, 32, 32)
+#include <WindowDefinition.hpp>
 
-extern RECT windowRect = {0, 0, 544, 375};
-extern RECT titleBarRect = {0, 0, windowRect.right, 20};
-RECT leftResizeRect = {0, titleBarRect.bottom, 5, windowRect.bottom - 5};
-RECT rightResizeRect = {windowRect.right - 5, titleBarRect.bottom, windowRect.right, windowRect.bottom - 5};
-RECT bottomResizeRect = {5, windowRect.bottom - 5, windowRect.right - 5, windowRect.bottom};
-RECT bottomRightResizeRect = {windowRect.right - 5, windowRect.bottom - 5, windowRect.right, windowRect.bottom};
-RECT bottomLeftResizeRect = {0, windowRect.bottom - 5, 5, windowRect.bottom};
+RECT windowRect = {0, 0, 544, 375};
+RECT titleBarRect = {0, 0, windowRect.right, 20};
+RECT leftResizeRect = {0, titleBarRect.bottom, RESIZE_BOX_SIZE, windowRect.bottom - RESIZE_BOX_SIZE};
+RECT rightResizeRect = {windowRect.right - RESIZE_BOX_SIZE, titleBarRect.bottom, windowRect.right, windowRect.bottom - RESIZE_BOX_SIZE};
+RECT bottomResizeRect = {RESIZE_BOX_SIZE, windowRect.bottom - RESIZE_BOX_SIZE, windowRect.right - RESIZE_BOX_SIZE, windowRect.bottom};
+RECT bottomRightResizeRect = {windowRect.right - RESIZE_BOX_SIZE, windowRect.bottom - RESIZE_BOX_SIZE, windowRect.right, windowRect.bottom};
+RECT bottomLeftResizeRect = {0, windowRect.bottom - RESIZE_BOX_SIZE, RESIZE_BOX_SIZE, windowRect.bottom};
+RECT contentArea = {RESIZE_BOX_SIZE, titleBarRect.bottom + RESIZE_BOX_SIZE, rightResizeRect.left, bottomResizeRect.top};
 
 void SetSizesAndPositions(HWND hwnd, LPARAM lParam)
 {
     int wWidth = GET_X_LPARAM(lParam);
     int wHeight = GET_Y_LPARAM(lParam);
     windowRect = {0, 0, wWidth, wHeight};
-    titleBarRect = {0, 0, windowRect.right, 20};
-    leftResizeRect = {0, titleBarRect.bottom, 5, windowRect.bottom - 5};
-    rightResizeRect = {windowRect.right - 5, titleBarRect.bottom, windowRect.right, windowRect.bottom - 5};
-    bottomResizeRect = {5, windowRect.bottom - 5, windowRect.right - 5, windowRect.bottom};
-    bottomRightResizeRect = {windowRect.right - 5, windowRect.bottom - 5, windowRect.right, windowRect.bottom};
-    bottomLeftResizeRect = {0, windowRect.bottom - 5, 5, windowRect.bottom};
+    titleBarRect = {0, 0, windowRect.right, titleBarRect.bottom};
+    leftResizeRect = {0, titleBarRect.bottom, RESIZE_BOX_SIZE, windowRect.bottom - RESIZE_BOX_SIZE};
+    rightResizeRect = {windowRect.right - RESIZE_BOX_SIZE, titleBarRect.bottom, windowRect.right, windowRect.bottom - RESIZE_BOX_SIZE};
+    bottomResizeRect = {RESIZE_BOX_SIZE, windowRect.bottom - RESIZE_BOX_SIZE, windowRect.right - RESIZE_BOX_SIZE, windowRect.bottom};
+    bottomRightResizeRect = {windowRect.right - RESIZE_BOX_SIZE, windowRect.bottom - RESIZE_BOX_SIZE, windowRect.right, windowRect.bottom};
+    bottomLeftResizeRect = {0, windowRect.bottom - RESIZE_BOX_SIZE, RESIZE_BOX_SIZE, windowRect.bottom};
+    contentArea = {RESIZE_BOX_SIZE, titleBarRect.bottom + RESIZE_BOX_SIZE, rightResizeRect.left, bottomResizeRect.top};
     InvalidateRect(hwnd, &windowRect, true);
 }
-
-const std::tuple<RECT *, LRESULT> RESIZE_RECTS[] = {
-    {&titleBarRect, HTCAPTION},
-    {&leftResizeRect, HTLEFT},
-    {&rightResizeRect, HTRIGHT},
-    {&bottomResizeRect, HTBOTTOM},
-    {&bottomRightResizeRect, HTBOTTOMRIGHT},
-    {&bottomLeftResizeRect, HTBOTTOMLEFT}
-};
 
 // Used for case WM_PAINT to paint the window
 void PaintWindow(HWND hwnd)
@@ -47,9 +39,12 @@ void PaintWindow(HWND hwnd)
 
     // Background
     FillRect(hdc, &windowRect, hBrush);
-    // TitleBar
+    // Title Bar
     hBrush = CreateSolidBrush(SECONDARY_COLOR);
     FillRect(hdc, &titleBarRect, hBrush);
+    // Content Area
+    hBrush = CreateSolidBrush(TERTIARY_COLOR);
+    FillRect(hdc, &contentArea, hBrush);
 
     SelectObject(hdc, hOldBrush);
     DeleteObject(hBrush);

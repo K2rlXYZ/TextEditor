@@ -1,22 +1,48 @@
+
 #include <Windows.h>
 
-#include <WindowWidgets.h>
-#include <WindowDefinition.h>
+#include <WindowWidgets.hpp>
+#include <WindowDefinition.hpp>
+#include <main.hpp>
 
 // GUI logic
 LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_INITDIALOG:
+    {
+
+    }
+    case WM_DRAWITEM:
+    {
+        LPDRAWITEMSTRUCT pDIS = (LPDRAWITEMSTRUCT)lParam;
+        if (pDIS->hwndItem == exitButton.hwnd)
+        {
+            exitButton.Drw(pDIS);
+        }
+        if (pDIS->hwndItem == maximizeButton.hwnd)
+        {
+            maximizeButton.Drw(pDIS);
+        }
+        if (pDIS->hwndItem == minimizeButton.hwnd)
+        {
+            minimizeButton.Drw(pDIS);
+        }
+        return TRUE;
+    }
     case WM_PAINT:
         PaintWindow(hwnd);
         break;
 
     case WM_CREATE:
     {
-        ExitButton exitButton(hwnd);
-        MaximizeButton MaximizeButton(hwnd);
-        MinimizeButton MinimizeButton(hwnd);
+        wcbSize = wcbs(titleBarRect.bottom);
+        wcbOffset = wcbo(titleBarRect.bottom, wcbSize);
+        exitButton = ExitButton(hwnd);
+        maximizeButton = MaximizeButton(hwnd);
+        minimizeButton = MinimizeButton(hwnd);
+        textBox = TextBox(hwnd);
     }
     break;
 
@@ -26,19 +52,37 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             exit(0);
         }
         if (LOWORD(wParam) == ID_MAXIMIZE_BUTTON && HIWORD(wParam) == BN_CLICKED)
-        { 
-            ShowWindow(hwnd, SW_MINIMIZE);
+        {
+            if (maximized)
+            {
+                ShowWindow(hwnd, SW_NORMAL);
+                maximized = false;
+            }
+            else
+            {
+                ShowWindow(hwnd, SW_MAXIMIZE);
+                maximized = true;
+            }
         }
         if (LOWORD(wParam) == ID_MINIMIZE_BUTTON && HIWORD(wParam) == BN_CLICKED)
-        { 
+        {
             ShowWindow(hwnd, SW_MINIMIZE);
         }
         break;
 
     // Sent after the window's size is changed
     case WM_SIZE:
+    {
         SetSizesAndPositions(hwnd, lParam);
+        maximized = false;
+        wcbSize = wcbs(titleBarRect.bottom);
+        wcbOffset = wcbo(titleBarRect.bottom, wcbSize);
+        exitButton.MoveButton(titleBarRect.right - wcbSize - wcbOffset, titleBarRect.top + wcbOffset);
+        maximizeButton.MoveButton(titleBarRect.right - wcbSize * 2 - wcbOffset * 2, titleBarRect.top + wcbOffset);
+        minimizeButton.MoveButton(titleBarRect.right - wcbSize * 3 - wcbOffset * 3, titleBarRect.top + wcbOffset);
+        textBox.Resize(contentArea.right-contentArea.left, contentArea.bottom-contentArea.top);
         break;
+    }
 
     // Sent to a window when the size or position of the window is about to change.
     case WM_GETMINMAXINFO:
@@ -61,7 +105,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
 int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nFunsterStil)
 {
-    const wchar_t szClassName[] = L"WindowsApp";
+    LPCWSTR szClassName = L"WindowsApp";
     WNDCLASSEX windowClass;
 
     windowClass.hInstance = hThisInstance;
